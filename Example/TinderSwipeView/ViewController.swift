@@ -57,7 +57,7 @@ class ViewController: UIViewController {
         swipeView = TinderSwipeView<UserModel>(frame: viewContainer.bounds, contentView: contentView)
         viewContainer.addSubview(swipeView)
         swipeView.showTinderCards(with: userModels ,isDummyShow: true)
-        swipeView.cornerRadius = 30
+        
     }
     
     private func programticViewForOverlay(frame:CGRect, userModel:UserModel) -> UIView{

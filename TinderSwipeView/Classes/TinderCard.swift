@@ -22,12 +22,9 @@ protocol TinderCardDelegate: NSObjectProtocol {
 
 class TinderCard: UIView {
 
-    var overlayImageView : UIImageView = {
-        let imageView = UIImageView()
-        imageView.alpha = 0
-        return imageView
-    }()
-    
+    var overlayView: UIView!
+    var overlayViewDislikeColor: UIColor = UIColor(red: 1, green: 0, blue: 0, alpha: 0.3)
+    var overlayViewLikeColor: UIColor = UIColor(red: 88/255, green: 1, blue: 0, alpha: 0.3)
     var index: Int!
     
     var roundedOverlay: UIView?
@@ -40,7 +37,9 @@ class TinderCard: UIView {
     var originalPoint = CGPoint.zero
     var cornerRadius: CGFloat = 5 {
         didSet {
+            overlayView.layer.cornerRadius = cornerRadius
             roundedOverlay?.layer.cornerRadius = cornerRadius
+            roundedOverlay?.layoutIfNeeded()
             roundedOverlay?.layoutIfNeeded()
             layer.shadowPath =
             UIBezierPath(roundedRect: bounds,
@@ -94,8 +93,9 @@ class TinderCard: UIView {
         containerView = UIView(frame: bounds)
         containerView.backgroundColor = .clear
         
-        overlayImageView = UIImageView(frame:bounds)
-        containerView.addSubview(overlayImageView)
+        overlayView = UIView(frame: bounds)
+        overlayView.alpha = 0
+        containerView.addSubview(overlayView)
     }
     
     /*
@@ -179,12 +179,12 @@ class TinderCard: UIView {
      */
     func makeUndoAction() {
         
-        overlayImageView.image = makeImage(name: isLiked ? "overlay_like" : "overlay_skip")
-        overlayImageView.alpha = 1.0
+        overlayView.backgroundColor = isLiked ? overlayViewLikeColor : overlayViewDislikeColor
+        overlayView.alpha = 1.0
         UIView.animate(withDuration: 0.4, animations: {() -> Void in
             self.center = self.originalPoint
             self.transform = CGAffineTransform(rotationAngle: 0)
-            self.overlayImageView.alpha = 0
+            self.overlayView.alpha = 0
         })
     }
     
@@ -205,7 +205,7 @@ class TinderCard: UIView {
      */
     func shakeAnimationCard(completion: @escaping (Bool) -> ()){
         
-        overlayImageView.image = makeImage(name: "overlay_skip")
+        overlayView.backgroundColor = overlayViewDislikeColor
         UIView.animate(withDuration: 0.5, animations: {() -> Void in
             let finishPoint = CGPoint(x: self.center.x - (self.frame.size.width / 2), y: self.center.y)
             self.animateCard(to: finishPoint, angle: -0.2, alpha: 1.0)
@@ -213,7 +213,7 @@ class TinderCard: UIView {
             UIView.animate(withDuration: 0.5, animations: {() -> Void in
                 self.animateCard(to: self.originalPoint)
             }, completion: {(_ complete: Bool) -> Void in
-                self.overlayImageView.image =  self.makeImage(name: "overlay_like")
+                self.overlayView.backgroundColor =  self.overlayViewLikeColor
                 UIView.animate(withDuration: 0.5, animations: {() -> Void in
                     let finishPoint = CGPoint(x: self.center.x + (self.frame.size.width / 2) ,y: self.center.y)
                     self.animateCard(to: finishPoint , angle: 0.2, alpha: 1)
@@ -233,18 +233,9 @@ class TinderCard: UIView {
      */
     fileprivate func setInitialLayoutStatus(isleft:Bool){
         
-        overlayImageView.alpha = 0.5
+        overlayView.alpha = 0.5
         
-        overlayImageView.image = makeImage(name: isleft ?  "overlay_skip" : "overlay_like")
-    }
-    
-    /*
-     * Acessing image from bundle
-     */
-    fileprivate func makeImage(name: String) -> UIImage? {
-        
-        let image = UIImage(named: name, in: Bundle(for: type(of: self)), compatibleWith: nil)
-        return image
+        overlayView.backgroundColor =  isleft ?  overlayViewDislikeColor : overlayViewLikeColor
     }
     
     /*
@@ -254,7 +245,7 @@ class TinderCard: UIView {
         
         self.center = center
         self.transform = CGAffineTransform(rotationAngle: angle)
-        overlayImageView.alpha = alpha
+        overlayView.alpha = alpha
     }
 }
 
@@ -324,7 +315,7 @@ extension TinderCard: UIGestureRecognizerDelegate {
             UIView.animate(withDuration: 0.3, delay: 0.0, usingSpringWithDamping: 0.5, initialSpringVelocity: 1.0, options: [], animations: {
                 self.center = self.originalPoint
                 self.transform = CGAffineTransform(rotationAngle: 0)
-                self.overlayImageView.alpha = 0
+                self.overlayView.alpha = 0
             })
         }
     }
@@ -333,8 +324,8 @@ extension TinderCard: UIGestureRecognizerDelegate {
      * Updating overlay methods
      */
     fileprivate func updateOverlay(_ distance: CGFloat) {
-        overlayImageView.image = makeImage(name:  distance > 0 ? "overlay_like" : "overlay_skip")
-        overlayImageView.alpha = min(abs(distance) / 100, 0.8)
+        overlayView.backgroundColor = distance > 0 ? overlayViewLikeColor : overlayViewDislikeColor
+        overlayView.alpha = min(abs(distance) / 100, 0.8)
         delegate?.currentCardStatus(card: self, distance: distance)
     }
 }

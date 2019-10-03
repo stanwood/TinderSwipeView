@@ -32,9 +32,13 @@ public class TinderSwipeView <Element>: UIView {
     public var sepeatorDistance : CGFloat = 8
     var index = 0
     public var cornerRadius: CGFloat = 5 {
-        didSet {
-            loadedCards.forEach({ $0.cornerRadius = cornerRadius })
-        }
+        didSet { loadedCards.forEach({ $0.cornerRadius = cornerRadius }) }
+    }
+    public var overlayViewDislikeColor: UIColor = UIColor(red: 1, green: 0, blue: 0, alpha: 0.4) {
+        didSet { loadedCards.forEach({ $0.overlayViewDislikeColor = overlayViewDislikeColor }) }
+    }
+    public var overlayViewLikeColor: UIColor = UIColor(red: 88/255, green: 1, blue: 0, alpha: 0.4) {
+        didSet { loadedCards.forEach({ $0.overlayViewLikeColor = overlayViewLikeColor }) }
     }
     fileprivate var allCards = [Element]()
     fileprivate var loadedCards = [TinderCard]()
@@ -81,6 +85,10 @@ public class TinderSwipeView <Element>: UIView {
                 } else {
                     self.insertSubview(cardView, belowSubview: loadedCards.last!)
                 }
+                
+                cardView.overlayViewDislikeColor = overlayViewDislikeColor
+                cardView.overlayViewLikeColor = overlayViewLikeColor
+                cardView.cornerRadius = cornerRadius
                 loadedCards.append(cardView)
             }
         }
