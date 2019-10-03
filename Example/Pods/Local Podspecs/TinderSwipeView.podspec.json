@@ -20,11 +20,6 @@
   },
   "swift_versions": "5.0",
   "source_files": "TinderSwipeView/Classes/**/*",
-  "resource_bundles": {
-    "TinderSwipeView": [
-      "TinderSwipeView/Resources/*"
-    ]
-  },
   "resources": "TinderSwipeView/Resources/**/*.{png,storyboard}",
   "swift_version": "5.0"
 }

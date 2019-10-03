@@ -30,9 +30,6 @@ LICENSE
   s.ios.deployment_target = '8.0'
   s.swift_version = '5.0'
   s.source_files = 'TinderSwipeView/Classes/**/*'
-  s.resource_bundles = {
-    'TinderSwipeView' => ['TinderSwipeView/Resources/*']
-    }
 
   s.resources = 'TinderSwipeView/Resources/**/*.{png,storyboard}'
 
