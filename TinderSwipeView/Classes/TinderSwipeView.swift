@@ -31,7 +31,11 @@ public class TinderSwipeView <Element>: UIView {
     }
     public var sepeatorDistance : CGFloat = 8
     var index = 0
-    
+    public var cornerRadius: CGFloat = 5 {
+        didSet {
+            loadedCards.forEach({ $0.cornerRadius = cornerRadius })
+        }
+    }
     fileprivate var allCards = [Element]()
     fileprivate var loadedCards = [TinderCard]()
     fileprivate var currentCard : TinderCard!

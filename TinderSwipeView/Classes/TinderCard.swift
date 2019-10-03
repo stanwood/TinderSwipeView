@@ -21,13 +21,7 @@ protocol TinderCardDelegate: NSObjectProtocol {
 }
 
 class TinderCard: UIView {
-    
-    var statusImageView : UIImageView = {
-        let imageView = UIImageView()
-        imageView.alpha = 0
-        return imageView
-    }()
-    
+
     var overlayImageView : UIImageView = {
         let imageView = UIImageView()
         imageView.alpha = 0
@@ -36,6 +30,7 @@ class TinderCard: UIView {
     
     var index: Int!
     
+    var roundedOverlay: UIView?
     var overlay: UIView?
     var containerView : UIView!
     weak var delegate: TinderCardDelegate?
@@ -43,7 +38,15 @@ class TinderCard: UIView {
     var xCenter: CGFloat = 0.0
     var yCenter: CGFloat = 0.0
     var originalPoint = CGPoint.zero
-    
+    var cornerRadius: CGFloat = 5 {
+        didSet {
+            roundedOverlay?.layer.cornerRadius = cornerRadius
+            roundedOverlay?.layoutIfNeeded()
+            layer.shadowPath =
+            UIBezierPath(roundedRect: bounds,
+                         cornerRadius: roundedOverlay?.layer.cornerRadius ?? 0).cgPath
+        }
+    }
     var isLiked = false
     var model : Any?
     
@@ -61,13 +64,27 @@ class TinderCard: UIView {
      */
     func setupView() {
         
-        layer.cornerRadius = bounds.width/20
-        layer.shadowRadius = 3
-        layer.shadowOpacity = 0.4
-        layer.shadowOffset = CGSize(width: 0.5, height: 3)
-        layer.shadowColor = UIColor.darkGray.cgColor
-        clipsToBounds = true
-        backgroundColor = .white
+        if roundedOverlay == nil {
+            roundedOverlay = UIView(frame: bounds)
+            roundedOverlay?.backgroundColor = .white
+            roundedOverlay?.layer.cornerRadius = cornerRadius
+            roundedOverlay?.clipsToBounds = true
+            insertSubview(roundedOverlay ?? UIView(), at: 0)
+        } else {
+            roundedOverlay?.frame = frame
+        }
+        
+        layer.shadowPath =
+        UIBezierPath(roundedRect: bounds,
+                     cornerRadius: roundedOverlay?.layer.cornerRadius ?? 0).cgPath
+        layer.shadowRadius = 5
+        layer.shadowOpacity = 0.35
+        layer.shadowOffset = CGSize(width: 0, height: 2)
+        layer.shadowColor = UIColor.black.cgColor
+        layer.masksToBounds = false
+        clipsToBounds = false
+        
+        backgroundColor = .clear
         originalPoint = center
         
         let panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(self.beingDragged))
@@ -77,9 +94,6 @@ class TinderCard: UIView {
         containerView = UIView(frame: bounds)
         containerView.backgroundColor = .clear
         
-        statusImageView = UIImageView(frame: CGRect(x: (frame.size.width / 2) - 37.5, y: 25, width: 75, height: 75))
-        containerView.addSubview(statusImageView)
-        
         overlayImageView = UIImageView(frame:bounds)
         containerView.addSubview(overlayImageView)
     }
@@ -87,11 +101,13 @@ class TinderCard: UIView {
     /*
      * Adding Overlay to TinderCard
      */
-    func addContentView( view: UIView?){
+    func addContentView( view: UIView?) {
         
-        if let overlay = view{
+        if let overlay = view {
             self.overlay = overlay
-            self.insertSubview(overlay, belowSubview: containerView)
+            overlay.backgroundColor = .brown
+            
+            roundedOverlay?.insertSubview(overlay, belowSubview: containerView)
         }
     }
     
@@ -163,14 +179,11 @@ class TinderCard: UIView {
      */
     func makeUndoAction() {
         
-        statusImageView.image = makeImage(name: isLiked ? "ic_like" : "overlay_skip")
         overlayImageView.image = makeImage(name: isLiked ? "overlay_like" : "overlay_skip")
-        statusImageView.alpha = 1.0
         overlayImageView.alpha = 1.0
         UIView.animate(withDuration: 0.4, animations: {() -> Void in
             self.center = self.originalPoint
             self.transform = CGAffineTransform(rotationAngle: 0)
-            self.statusImageView.alpha = 0
             self.overlayImageView.alpha = 0
         })
     }
@@ -192,7 +205,6 @@ class TinderCard: UIView {
      */
     func shakeAnimationCard(completion: @escaping (Bool) -> ()){
         
-        statusImageView.image = makeImage(name: "ic_skip")
         overlayImageView.image = makeImage(name: "overlay_skip")
         UIView.animate(withDuration: 0.5, animations: {() -> Void in
             let finishPoint = CGPoint(x: self.center.x - (self.frame.size.width / 2), y: self.center.y)
@@ -201,7 +213,6 @@ class TinderCard: UIView {
             UIView.animate(withDuration: 0.5, animations: {() -> Void in
                 self.animateCard(to: self.originalPoint)
             }, completion: {(_ complete: Bool) -> Void in
-                self.statusImageView.image = self.makeImage(name: "ic_like")
                 self.overlayImageView.image =  self.makeImage(name: "overlay_like")
                 UIView.animate(withDuration: 0.5, animations: {() -> Void in
                     let finishPoint = CGPoint(x: self.center.x + (self.frame.size.width / 2) ,y: self.center.y)
@@ -222,10 +233,8 @@ class TinderCard: UIView {
      */
     fileprivate func setInitialLayoutStatus(isleft:Bool){
         
-        statusImageView.alpha = 0.5
         overlayImageView.alpha = 0.5
         
-        statusImageView.image = makeImage(name: isleft ?  "ic_skip" : "ic_like")
         overlayImageView.image = makeImage(name: isleft ?  "overlay_skip" : "overlay_like")
     }
     
@@ -245,7 +254,6 @@ class TinderCard: UIView {
         
         self.center = center
         self.transform = CGAffineTransform(rotationAngle: angle)
-        statusImageView.alpha = alpha
         overlayImageView.alpha = alpha
     }
 }
@@ -271,7 +279,7 @@ extension TinderCard: UIGestureRecognizerDelegate {
         // Keep swiping
         case .began:
             originalPoint = self.center;
-            addSubview(containerView)
+            roundedOverlay?.addSubview(containerView)
             self.delegate?.didSelectCard(card: self)
             break;
         //in the middle of a swipe
@@ -316,7 +324,6 @@ extension TinderCard: UIGestureRecognizerDelegate {
             UIView.animate(withDuration: 0.3, delay: 0.0, usingSpringWithDamping: 0.5, initialSpringVelocity: 1.0, options: [], animations: {
                 self.center = self.originalPoint
                 self.transform = CGAffineTransform(rotationAngle: 0)
-                self.statusImageView.alpha = 0
                 self.overlayImageView.alpha = 0
             })
         }
@@ -326,10 +333,7 @@ extension TinderCard: UIGestureRecognizerDelegate {
      * Updating overlay methods
      */
     fileprivate func updateOverlay(_ distance: CGFloat) {
-        
-        statusImageView.image = makeImage(name:  distance > 0 ? "ic_like" : "ic_skip")
         overlayImageView.image = makeImage(name:  distance > 0 ? "overlay_like" : "overlay_skip")
-        statusImageView.alpha = min(abs(distance) / 100, 0.8)
         overlayImageView.alpha = min(abs(distance) / 100, 0.8)
         delegate?.currentCardStatus(card: self, distance: distance)
     }
