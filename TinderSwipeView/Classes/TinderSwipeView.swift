@@ -64,15 +64,15 @@ public class TinderSwipeView <Element>: UIView {
         fatalError("Please use init(frame:,overlayGenerator)")
     }
     
-    /*
-     * Showing Tinder cards to view
-     */
+    
+    /// Showing Tinder cards to view
     public func showTinderCards(with elements: [Element] ,isDummyShow: Bool = true) {
         
-        if elements.isEmpty {
-            return
-        }
+        guard !elements.isEmpty else { return }
         
+        index = 0
+        loadedCards.removeAll()
+        allCards.removeAll()
         allCards.append(contentsOf: elements)
         
         for (i,element) in elements.enumerated() {
@@ -100,20 +100,16 @@ public class TinderSwipeView <Element>: UIView {
         }
     }
     
-    /*
-     * Adding additional cards
-     */
+    /// Adding additional cards
     public func appendTinderCards(with elements: [Element]) {
-        
-        if elements.isEmpty {
-            return
-        }
+        guard !elements.isEmpty else { return }
+        allCards.append(contentsOf: elements)
     }
     
     /*
      * Creating invidual cards
      */
-    fileprivate func createTinderCard(index:Int,element: Element) -> TinderCard {
+    fileprivate func createTinderCard(index: Int, element: Element) -> TinderCard {
         
         let card = TinderCard(frame: CGRect(x: inset, y: inset + (CGFloat(loadedCards.count) * self.sepeatorDistance), width: bounds.width - (inset * 2), height: bounds.height - (CGFloat(bufferSize) * sepeatorDistance) - (inset * 2) ))
         card.delegate = self
@@ -127,7 +123,7 @@ public class TinderSwipeView <Element>: UIView {
      */
     fileprivate func animateCardAfterSwiping() {
         
-        if loadedCards.isEmpty{
+        if loadedCards.isEmpty {
             self.delegate?.endOfCardsReached()
             return
         }
